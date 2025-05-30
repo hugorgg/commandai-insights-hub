@@ -5,12 +5,66 @@ import Sidebar from "../components/Sidebar";
 import Header from "../components/Header";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { MessageSquare, Clock, User } from "lucide-react";
+import { MessageSquare, Clock, User, CheckCircle } from "lucide-react";
 
 const Atendimentos = () => {
   const navigate = useNavigate();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [atendimentos, setAtendimentos] = useState({
+    novo: [
+      {
+        id: 1,
+        cliente: "Pedro Lima",
+        canal: "WhatsApp",
+        tipo: "Dúvida sobre serviços",
+        hora: "14:30",
+        conversa: "Olá! Gostaria de saber mais sobre consultoria em marketing digital...",
+        data: "2024-01-15"
+      },
+      {
+        id: 2,
+        cliente: "Carla Mendes",
+        canal: "Instagram",
+        tipo: "Solicitação de orçamento",
+        hora: "15:15",
+        conversa: "Vi seus posts e gostaria de um orçamento para gerenciamento de redes sociais...",
+        data: "2024-01-15"
+      }
+    ],
+    emAndamento: [
+      {
+        id: 3,
+        cliente: "Roberto Silva",
+        canal: "Site",
+        tipo: "Agendamento",
+        hora: "13:45",
+        conversa: "Preciso agendar uma reunião para discutir o desenvolvimento do meu site...",
+        data: "2024-01-15"
+      }
+    ],
+    concluido: [
+      {
+        id: 4,
+        cliente: "Ana Santos",
+        canal: "WhatsApp",
+        tipo: "Suporte",
+        hora: "12:20",
+        conversa: "Problema resolvido! Obrigada pelo atendimento rápido e eficiente.",
+        data: "2024-01-14"
+      },
+      {
+        id: 5,
+        cliente: "Lucas Costa",
+        canal: "Instagram",
+        tipo: "Venda finalizada",
+        hora: "11:30",
+        conversa: "Pacote de consultoria contratado. Aguardando início dos trabalhos.",
+        data: "2024-01-14"
+      }
+    ]
+  });
 
   useEffect(() => {
     const token = localStorage.getItem("comandai_token");
@@ -21,54 +75,38 @@ const Atendimentos = () => {
     }
   }, [navigate]);
 
-  // Dados mockados dos atendimentos
-  const atendimentos = {
-    novo: [
-      {
-        id: 1,
-        cliente: "Pedro Lima",
-        canal: "WhatsApp",
-        tipo: "Dúvida sobre serviços",
-        hora: "14:30",
-        conversa: "Olá! Gostaria de saber mais sobre consultoria em marketing digital..."
-      },
-      {
-        id: 2,
-        cliente: "Carla Mendes",
-        canal: "Instagram",
-        tipo: "Solicitação de orçamento",
-        hora: "15:15",
-        conversa: "Vi seus posts e gostaria de um orçamento para gerenciamento de redes sociais..."
+  const marcarConcluido = (id: number) => {
+    setAtendimentos(prev => {
+      // Procurar o item em novo ou emAndamento
+      let itemParaMover = null;
+      let novoEstado = { ...prev };
+
+      // Procurar em novo
+      const indexNovo = prev.novo.findIndex(item => item.id === id);
+      if (indexNovo !== -1) {
+        itemParaMover = prev.novo[indexNovo];
+        novoEstado.novo = prev.novo.filter(item => item.id !== id);
       }
-    ],
-    emAndamento: [
-      {
-        id: 3,
-        cliente: "Roberto Silva",
-        canal: "Site",
-        tipo: "Agendamento",
-        hora: "13:45",
-        conversa: "Preciso agendar uma reunião para discutir o desenvolvimento do meu site..."
+
+      // Procurar em emAndamento se não encontrou em novo
+      if (!itemParaMover) {
+        const indexEmAndamento = prev.emAndamento.findIndex(item => item.id === id);
+        if (indexEmAndamento !== -1) {
+          itemParaMover = prev.emAndamento[indexEmAndamento];
+          novoEstado.emAndamento = prev.emAndamento.filter(item => item.id !== id);
+        }
       }
-    ],
-    concluido: [
-      {
-        id: 4,
-        cliente: "Ana Santos",
-        canal: "WhatsApp",
-        tipo: "Suporte",
-        hora: "12:20",
-        conversa: "Problema resolvido! Obrigada pelo atendimento rápido e eficiente."
-      },
-      {
-        id: 5,
-        cliente: "Lucas Costa",
-        canal: "Instagram",
-        tipo: "Venda finalizada",
-        hora: "11:30",
-        conversa: "Pacote de consultoria contratado. Aguardando início dos trabalhos."
+
+      // Adicionar à lista de concluídos se encontrou o item
+      if (itemParaMover) {
+        novoEstado.concluido = [...prev.concluido, {
+          ...itemParaMover,
+          data: new Date().toISOString().split('T')[0] // Atualizar data para hoje
+        }];
       }
-    ]
+
+      return novoEstado;
+    });
   };
 
   const getChannelBadge = (canal: string) => {
@@ -84,7 +122,12 @@ const Atendimentos = () => {
     }
   };
 
-  const KanbanColumn = ({ title, items, bgColor }: { title: string; items: any[]; bgColor: string }) => (
+  const KanbanColumn = ({ title, items, bgColor, showConcluirButton = false }: { 
+    title: string; 
+    items: any[]; 
+    bgColor: string; 
+    showConcluirButton?: boolean;
+  }) => (
     <div className="flex-1">
       <div className={`${bgColor} rounded-lg p-4 mb-4`}>
         <h3 className="text-white font-semibold text-center">{title}</h3>
@@ -112,6 +155,21 @@ const Atendimentos = () => {
                       {item.hora}
                     </div>
                   </div>
+                  {showConcluirButton && (
+                    <div className="mt-3 pt-3 border-t border-gray-700">
+                      <Button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          marcarConcluido(item.id);
+                        }}
+                        size="sm"
+                        className="w-full bg-green-600 hover:bg-green-700 text-white"
+                      >
+                        <CheckCircle className="h-4 w-4 mr-2" />
+                        Marcar como Concluído
+                      </Button>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </DialogTrigger>
@@ -127,6 +185,8 @@ const Atendimentos = () => {
                   {getChannelBadge(item.canal)}
                   <span className="text-gray-400">•</span>
                   <span className="text-gray-400">{item.hora}</span>
+                  <span className="text-gray-400">•</span>
+                  <span className="text-gray-400">{new Date(item.data).toLocaleDateString('pt-BR')}</span>
                 </div>
                 <div className="bg-gray-800 p-4 rounded-lg">
                   <p className="text-gray-300">{item.conversa}</p>
@@ -137,6 +197,15 @@ const Atendimentos = () => {
                     Olá! Agradecemos seu contato. Nossa equipe analisará sua solicitação e retornará em breve com todas as informações necessárias.
                   </p>
                 </div>
+                {showConcluirButton && (
+                  <Button
+                    onClick={() => marcarConcluido(item.id)}
+                    className="w-full bg-green-600 hover:bg-green-700 text-white"
+                  >
+                    <CheckCircle className="h-4 w-4 mr-2" />
+                    Marcar como Concluído
+                  </Button>
+                )}
               </div>
             </DialogContent>
           </Dialog>
@@ -167,11 +236,13 @@ const Atendimentos = () => {
                 title="Novo" 
                 items={atendimentos.novo} 
                 bgColor="bg-yellow-600" 
+                showConcluirButton={true}
               />
               <KanbanColumn 
                 title="Em Atendimento" 
                 items={atendimentos.emAndamento} 
                 bgColor="bg-blue-600" 
+                showConcluirButton={true}
               />
               <KanbanColumn 
                 title="Concluído" 
