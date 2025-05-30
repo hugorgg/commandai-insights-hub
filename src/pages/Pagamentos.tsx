@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Sidebar from "../components/Sidebar";
@@ -6,7 +5,7 @@ import Header from "../components/Header";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { DollarSign, Calendar, CreditCard, Filter } from "lucide-react";
+import { DollarSign, Calendar, CreditCard, Filter, Clock } from "lucide-react";
 
 const Pagamentos = () => {
   const navigate = useNavigate();
