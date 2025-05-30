@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { updatePassword } from "@/lib/supabase";
+import { useAuth } from "@/lib/auth";
 
 const ChangePassword = () => {
   const [newPassword, setNewPassword] = useState("");
@@ -13,6 +14,7 @@ const ChangePassword = () => {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { user } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -39,10 +41,20 @@ const ChangePassword = () => {
 
     try {
       await updatePassword(newPassword);
+      
+      // Update needs_password_change flag
+      const { error } = await supabase
+        .from('usuarios')
+        .update({ needs_password_change: false })
+        .eq('id', user?.id);
+
+      if (error) throw error;
+
       toast({
         title: "Senha alterada com sucesso!",
         description: "Você será redirecionado para o painel",
       });
+      
       navigate("/");
     } catch (error) {
       console.error("Error updating password:", error);
