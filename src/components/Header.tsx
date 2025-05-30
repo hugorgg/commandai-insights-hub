@@ -1,78 +1,141 @@
 
 import { useState } from "react";
-import { Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { Card, CardContent } from "@/components/ui/card";
+import { Bell, User, ChevronDown } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { useNavigate } from "react-router-dom";
 
 const Header = () => {
-  const [notifications] = useState([
-    { id: 1, text: "Novo agendamento confirmado", time: "2 min atrás", read: false },
-    { id: 2, text: "Atendimento iniciado via WhatsApp", time: "5 min atrás", read: false },
-    { id: 3, text: "Pagamento aprovado", time: "10 min atrás", read: true },
+  const navigate = useNavigate();
+  const [notificacoes] = useState([
+    {
+      id: 1,
+      tipo: "agendamento",
+      titulo: "Novo agendamento",
+      descricao: "Maria Silva agendou Consultoria Marketing",
+      tempo: "2 min atrás",
+      lida: false
+    },
+    {
+      id: 2,
+      tipo: "atendimento",
+      titulo: "Atendimento iniciado",
+      descricao: "João Santos iniciou conversa no WhatsApp",
+      tempo: "5 min atrás",
+      lida: false
+    },
+    {
+      id: 3,
+      tipo: "pagamento",
+      titulo: "Pagamento aprovado",
+      descricao: "Ana Costa - R$ 800,00 via Pix",
+      tempo: "10 min atrás",
+      lida: true
+    }
   ]);
 
-  const unreadCount = notifications.filter(n => !n.read).length;
-  const user = JSON.parse(localStorage.getItem("comandai_user") || "{}");
+  const notificacaoesNaoLidas = notificacoes.filter(n => !n.lida).length;
+  const usuario = JSON.parse(localStorage.getItem("comandai_user") || "{}");
+
+  const handleLogout = () => {
+    localStorage.removeItem("comandai_token");
+    localStorage.removeItem("comandai_user");
+    navigate("/login");
+  };
 
   return (
-    <header className="bg-gray-900 border-b border-gray-800 px-6 py-4">
+    <header className="bg-gray-900 border-b border-gray-800 p-4">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-semibold text-white">Dashboard</h1>
-          <p className="text-sm text-gray-400">Bem-vindo de volta, {user.company || "Empresa"}</p>
+          <h2 className="text-xl font-semibold text-white">Bem-vindo ao ComandAI</h2>
+          <p className="text-gray-400 text-sm">Gerencie seus atendimentos com inteligência artificial</p>
         </div>
         
-        <div className="flex items-center space-x-4">
+        <div className="flex items-center gap-4">
           {/* Notificações */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="relative text-gray-400 hover:text-white">
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="ghost" size="sm" className="relative text-gray-400 hover:text-white">
                 <Bell className="h-5 w-5" />
-                {unreadCount > 0 && (
-                  <Badge className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 bg-[#70a5ff] text-xs">
-                    {unreadCount}
+                {notificacaoesNaoLidas > 0 && (
+                  <Badge className="absolute -top-1 -right-1 h-5 w-5 p-0 bg-red-600 text-xs flex items-center justify-center">
+                    {notificacaoesNaoLidas}
                   </Badge>
                 )}
               </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-80 bg-gray-900 border-gray-800">
+            </PopoverTrigger>
+            <PopoverContent className="w-80 bg-gray-900 border-gray-800 p-0" align="end">
               <div className="p-4 border-b border-gray-800">
-                <h3 className="font-semibold text-white">Notificações</h3>
+                <h3 className="text-white font-semibold">Notificações</h3>
+                <p className="text-gray-400 text-sm">{notificacaoesNaoLidas} não lidas</p>
               </div>
-              {notifications.slice(0, 5).map((notification) => (
-                <DropdownMenuItem 
-                  key={notification.id}
-                  className={`p-4 text-white hover:bg-gray-800 ${!notification.read ? 'bg-gray-800/50' : ''}`}
-                >
-                  <div className="flex flex-col space-y-1">
-                    <p className="text-sm">{notification.text}</p>
-                    <p className="text-xs text-gray-400">{notification.time}</p>
+              <div className="max-h-80 overflow-y-auto">
+                {notificacoes.slice(0, 5).map((notificacao) => (
+                  <div key={notificacao.id} className={`p-4 border-b border-gray-800 hover:bg-gray-800 transition-colors ${!notificacao.lida ? 'bg-gray-800/50' : ''}`}>
+                    <div className="flex items-start gap-3">
+                      <div className={`w-2 h-2 rounded-full mt-2 ${!notificacao.lida ? 'bg-[#70a5ff]' : 'bg-gray-600'}`}></div>
+                      <div className="flex-1">
+                        <p className="text-white font-medium text-sm">{notificacao.titulo}</p>
+                        <p className="text-gray-400 text-xs">{notificacao.descricao}</p>
+                        <p className="text-gray-500 text-xs mt-1">{notificacao.tempo}</p>
+                      </div>
+                    </div>
                   </div>
-                </DropdownMenuItem>
-              ))}
-              <div className="p-2 border-t border-gray-800 flex space-x-2">
-                <Button size="sm" variant="outline" className="flex-1 border-gray-700 text-gray-300">
-                  Ver agendamentos
+                ))}
+              </div>
+              <div className="p-4 border-t border-gray-800 space-y-2">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="w-full text-white border-gray-700 hover:bg-gray-800"
+                  onClick={() => navigate("/agendamentos")}
+                >
+                  Ver Agendamentos
                 </Button>
-                <Button size="sm" variant="outline" className="flex-1 border-gray-700 text-gray-300">
-                  Ver atendimentos
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="w-full text-white border-gray-700 hover:bg-gray-800"
+                  onClick={() => navigate("/atendimentos")}
+                >
+                  Ver Atendimentos
                 </Button>
               </div>
+            </PopoverContent>
+          </Popover>
+
+          {/* Menu do Usuário */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="flex items-center gap-2 text-white hover:bg-gray-800">
+                <div className="w-8 h-8 bg-[#70a5ff] rounded-full flex items-center justify-center">
+                  <User className="h-4 w-4 text-white" />
+                </div>
+                <div className="text-left hidden md:block">
+                  <p className="text-sm font-medium">{usuario.email}</p>
+                  <p className="text-xs text-gray-400">{usuario.company}</p>
+                </div>
+                <ChevronDown className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="bg-gray-900 border-gray-800 text-white" align="end">
+              <DropdownMenuItem 
+                onClick={() => navigate("/configuracoes")}
+                className="hover:bg-gray-800 cursor-pointer"
+              >
+                Configurações
+              </DropdownMenuItem>
+              <DropdownMenuItem 
+                onClick={handleLogout}
+                className="hover:bg-gray-800 cursor-pointer text-red-400"
+              >
+                Sair
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-
-          {/* Avatar do usuário */}
-          <div className="w-8 h-8 bg-[#70a5ff] rounded-full flex items-center justify-center">
-            <span className="text-white text-sm font-medium">
-              {user.company ? user.company.charAt(0).toUpperCase() : "U"}
-            </span>
-          </div>
         </div>
       </div>
     </header>
